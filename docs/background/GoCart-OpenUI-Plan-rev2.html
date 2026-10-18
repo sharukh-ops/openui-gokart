@@ -1,0 +1,669 @@
+
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GoCart on OpenUI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column with a sticky section menu; tables, code and the architecture diagram scroll inside their own boxes. */
+:root{
+  --bg:#f5f7f6; --surface:#ffffff; --sunk:#eaefed; --line:#d5ddd9;
+  --fg:#17211d; --muted:#56635d; --accent:#0d7a55; --accent-soft:#dcefe6;
+  --warn:#9a5b00; --warn-soft:#fbefd9; --no:#a33a2e; --no-soft:#f8e3df;
+  --f-display:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101614; --surface:#18201d; --sunk:#1f2925; --line:#2e3a35;
+  --fg:#e6ece9; --muted:#9aa8a1; --accent:#4cc495; --accent-soft:#183a2d;
+  --warn:#e2b25c; --warn-soft:#3a2d14; --no:#ec8b7f; --no-soft:#3d1f1b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101614; --surface:#18201d; --sunk:#1f2925; --line:#2e3a35;
+  --fg:#e6ece9; --muted:#9aa8a1; --accent:#4cc495; --accent-soft:#183a2d;
+  --warn:#e2b25c; --warn-soft:#3a2d14; --no:#ec8b7f; --no-soft:#3d1f1b; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--f-body);padding-inline:16px;padding-block:0 80px}
+.wrap{max-width:980px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,5vw,2.9rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.65rem;font-weight:600}
+h3{font-size:1.12rem;font-weight:600}
+p{margin:0;max-width:68ch}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--sunk);padding:.1em .35em;border-radius:4px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font:500 .74rem/1 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+ul.plain{margin:0;padding-left:1.2em;display:grid;gap:4px}
+
+header.top{padding-block:48px 28px;display:grid;gap:14px;border-bottom:1px solid var(--line)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.88rem;color:var(--muted)}
+.pill{display:inline-block;font:500 .75rem/1 var(--f-mono);padding:.4em .7em;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.no{background:var(--no-soft);color:var(--no)}
+.lede{font-size:1.15rem;color:var(--fg)}
+
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-16px;padding:10px 16px;overflow-x:auto}
+nav.toc ol{display:flex;gap:6px;list-style:none;margin:0 auto;padding:0;max-width:980px;white-space:nowrap}
+nav.toc a{display:block;text-decoration:none;color:var(--muted);font-size:.85rem;padding:.35em .7em;border-radius:6px}
+nav.toc a:hover{background:var(--sunk);color:var(--fg)}
+nav.toc a.on{background:var(--accent-soft);color:var(--accent)}
+
+section{padding-block:52px 8px;display:grid;gap:18px;scroll-margin-top:56px}
+section>header{display:grid;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:8px;align-content:start;min-width:0}
+.box h3{font-size:1rem}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:14px 16px;border-radius:0 8px 8px 0;display:grid;gap:6px}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+
+.flow{display:grid;gap:0;counter-reset:step}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;position:relative;padding-bottom:16px}
+.step::before{counter-increment:step;content:counter(step);font:600 .95rem/40px var(--f-mono);text-align:center;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1.5px solid var(--accent);color:var(--accent)}
+.step:not(:last-child)::after{content:"";position:absolute;left:20px;top:42px;bottom:2px;width:1.5px;background:var(--line)}
+.step .body{padding-top:7px;display:grid;gap:4px;min-width:0}
+.step .who{font:500 .72rem/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+pre.code{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0;font:13.5px/1.55 var(--f-mono);color:var(--fg)}
+pre.code .c{color:var(--muted)}
+pre.code .k{color:var(--accent)}
+pre.diagram{font-size:12.5px;line-height:1.45;background:var(--surface)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font:600 .74rem/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;width:3.2em}
+td.key{font-weight:600;white-space:nowrap}
+
+.stage{display:grid;gap:10px}
+.stage-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.stage-head .range{font:500 .8rem var(--f-mono);color:var(--muted)}
+tr.mile td{background:var(--accent-soft)}
+
+.lifecycle{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.9rem}
+.lifecycle span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.3em .6em}
+.lifecycle i{font-style:normal;color:var(--muted)}
+
+.dec{display:grid;grid-template-columns:2.2em 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.dec:last-child{border-bottom:0}
+.dec .n{font:600 1rem var(--f-mono);color:var(--accent)}
+.dec .q{font-weight:600}
+.dec .rec{margin-top:4px}
+.dec .rec b{color:var(--accent)}
+
+.alt-group{display:grid;gap:10px}
+.alt{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.alt .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.alt h3{font-size:1rem}
+.alt dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:4px 0 0}
+.alt dt{font:500 .74rem/1.6 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.alt dd{margin:0;min-width:0}
+@media (max-width:520px){.alt dl{grid-template-columns:1fr}.alt dt{margin-top:4px}}
+
+.mock{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;position:relative;min-height:220px}
+.mock .bar{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+.mock .card{border:1px dashed var(--accent);border-radius:8px;padding:12px;display:grid;gap:6px;background:var(--bg)}
+.mock .card .t{font-weight:600;font-size:.92rem}
+.mock .rowx{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;border-top:1px solid var(--line);padding-top:6px;font-variant-numeric:tabular-nums}
+.mock .ask{position:absolute;right:14px;bottom:14px;background:var(--accent);color:var(--surface);border-radius:999px;padding:.55em 1em;font:600 .82rem var(--f-display)}
+.mock .q{font-size:.85rem;background:var(--sunk);border-radius:8px;padding:8px 10px;max-width:80%}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted);display:grid;gap:6px}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Engineering plan · for team review · revision 2</span>
+  <h1>GoCart on OpenUI</h1>
+  <p class="lede">Rebuild a normal web app so its pages are OpenUI layouts. Users can then add and change cards on their own screens by asking, and nobody has to edit code for each request.</p>
+  <div class="meta">
+    <span>12 Oct 2026</span>
+    <span>Test app: GoCart (open-source shop, used as the test subject)</span>
+    <span>Reference: ZoomInfo Open-UI POC</span>
+    <span class="pill warn">Draft for discussion</span>
+  </div>
+  <div class="callout">
+    <p><b>What changed in revision 2.</b> Tools are defined once in a tool registry inside the app; MCP becomes an optional adapter. Users no longer get a full copy of the page; their cards and changes are separate rows. Generated cards get a dry run before saving. The plan now builds one complete demo slice first and lists what must be finished before real customer data is used.</p>
+  </div>
+</header>
+</div>
+
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#goal">1 · Goal</a></li>
+    <li><a href="#arch">2 · Architecture</a></li>
+    <li><a href="#how">3 · How it works</a></li>
+    <li><a href="#stored">4 · Storage</a></li>
+    <li><a href="#state">5 · Sessions &amp; state</a></li>
+    <li><a href="#scope">6 · Demo vs production</a></li>
+    <li><a href="#phases">7 · Build plan</a></li>
+    <li><a href="#decisions">8 · Decisions</a></li>
+    <li><a href="#alternatives">9 · Other ways</a></li>
+    <li><a href="#risks">10 · Risks</a></li>
+    <li><a href="#sources">11 · Sources</a></li>
+  </ol>
+</nav>
+
+<main class="wrap">
+
+<!-- 1 GOAL -->
+<section id="goal">
+  <header>
+    <span class="eyebrow">1 · Goal</span>
+    <h2>The problem and what we want to build</h2>
+  </header>
+  <div class="grid2">
+    <div class="box">
+      <h3>The problem</h3>
+      <p>Every user wants their screens a little different. A seller wants "orders waiting more than 2 days". An admin wants "revenue per store as a chart". Today each of these is a feature request that waits for a developer. SaaS teams will not rewrite legacy code for each user.</p>
+    </div>
+    <div class="box">
+      <h3>What we want</h3>
+      <p>A floating <b>Ask</b> button. The user types what they want and a working card appears on the page. They can move it, pin it or delete it. It is still there tomorrow, showing tomorrow's numbers.</p>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="mock" aria-label="Example of the user experience">
+      <div class="bar"><b>Seller · Orders</b><span>· Happy Shop</span></div>
+      <div class="q">Show orders waiting more than 2 days</div>
+      <div class="card">
+        <span class="t">Orders waiting &gt; 2 days</span>
+        <div class="rowx"><span>#order_6 · Kristin W.</span><span>ORDER_PLACED · 3 d</span></div>
+        <div class="rowx"><span>#order_7 · GreatStack</span><span>ORDER_PLACED · 2 d</span></div>
+        <span class="muted" style="font-size:.78rem">New card · live data · example rows</span>
+      </div>
+      <span class="ask">Ask</span>
+    </div>
+    <div class="box">
+      <h3>Why GoCart</h3>
+      <p>GoCart is an open-source shop (storefront, seller dashboard, admin panel) that we use only as a test subject. If the method works on GoCart, it can be applied to other apps.</p>
+      <h3 style="margin-top:8px">The one rule</h3>
+      <p>The AI proposes a screen. The server decides what is valid, what the user may see, and what actually runs. The AI never sees the data; each card fetches its own data every time it opens.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ARCHITECTURE -->
+<section id="arch">
+  <header>
+    <span class="eyebrow">2 · Architecture</span>
+    <h2>One app, one tool registry, one database</h2>
+    <p class="muted">Everything runs inside the GoCart Next.js app. MCP is an adapter we can add later for outside agents; it is not in the path of page loads.</p>
+  </header>
+<pre class="code diagram" aria-label="Architecture diagram">┌──────────────── Browser ─────────────────┐
+│ Page shell (React): nav, login, payment, │
+│ image upload                             │
+│  ├─ Role page layout     (OpenUI Renderer)│
+│  ├─ User cards           (1 Renderer each)│
+│  ├─ Ask button                            │
+│  └─ Query cache (keyed by user) +         │◀─ refetch when the date range
+│     page store (date range)               │   changes or a write invalidates
+└────────┬───────────────────┬─────────────┘
+         │ /api/tool         │ /api/ask · /api/state · /api/cards
+┌────────▼───────────────────▼──────────────── Next.js server ──────┐
+│ Session cookie → ctx {userId, storeId, role}                      │
+│                                                                   │
+│ TOOL REGISTRY  (one definition per tool)                          │
+│   name · input/output schema (zod) · allowed roles                │
+│   · reads / invalidates · handler(ctx, args) · timeout · row cap  │
+│      ├─▶ /api/tool     pages read and write data                  │
+│      ├─▶ prompt spec   the AI reads the schemas, never the rows   │
+│      └─▶ MCP adapter   later, for outside agents                  │
+│                                                                   │
+│ /api/ask: prompt → LLM → parse → validate → dry run → save        │
+└──────────────────────────────┬────────────────────────────────────┘
+                  SQLite (demo) → Postgres (production)
+    GoCart tables · page_layouts · user_cards · user_page_prefs
+    · ui_state · sessions · audit_log</pre>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>A tool is defined once</h3>
+<pre class="code"><span class="k">defineTool</span>({
+  name: "get_store_orders",
+  roles: ["seller"],
+  input: z.object({
+    olderThanDays: z.number().int().min(0).max(90),
+  }).strict(),
+  output: z.object({ orders: z.array(Order) }),
+  reads: ["orders"],
+  timeoutMs: 3000, maxRows: 500,
+  handler: (ctx, args) =&gt;
+    repo.orders.forStore(ctx.storeId, args),
+})</pre>
+    </div>
+    <div class="box">
+      <h3>Why this shape</h3>
+      <ul class="plain">
+        <li>The page API, the AI's tool list and a future MCP server come from the same definition, so they cannot drift apart.</li>
+        <li><code>ctx</code> comes only from the session. It is never part of <code>args</code>, so there is nothing to strip.</li>
+        <li><code>.strict()</code> rejects any field the schema does not list.</li>
+        <li>Handlers only use store-scoped repository functions. No raw queries in handlers.</li>
+        <li>Every tool has a timeout and a row limit.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 3 HOW -->
+<section id="how">
+  <header>
+    <span class="eyebrow">3 · How it works</span>
+    <h2>From a question to a live card</h2>
+  </header>
+
+  <h3>3.1 Creating a card (<code>/api/ask</code>)</h3>
+  <div class="flow">
+    <div class="step"><div class="body"><span class="who">User</span><h3>Asks with the Ask button</h3><p>"Show orders waiting more than 2 days."</p></div></div>
+    <div class="step"><div class="body"><span class="who">Server · prompt</span><h3>The AI gets the question, components and allowed tools</h3><p>A trimmed component list and the schemas of only the read tools this role may use. No data rows.</p></div></div>
+    <div class="step"><div class="body"><span class="who">LLM</span><h3>Writes a layout in OpenUI Lang</h3><p>One complete response, not streamed, so the card is checked and saved as a whole.</p></div></div>
+    <div class="step"><div class="body"><span class="who">Server · parse and validate</span><h3>The app checks the layout itself</h3><p>Registered components only. Every tool exists and its args match the schema. Every binding path exists in the tool's output schema. No <code>Mutation</code>. No hard-coded values inside data components (Table, Chart, Stat). If it fails, the errors go back to the model <b>once</b> for a repair.</p></div></div>
+    <div class="step"><div class="body"><span class="who">Server · dry run</span><h3>The card's queries run once as this user</h3><p>The rows are used only to check that bindings resolve. They are never sent to the model. See the table below for what each result means.</p></div></div>
+    <div class="step"><div class="body"><span class="who">Database</span><h3>Saved as a <code>user_cards</code> row</h3><p>With a stable card ID, the tool versions it uses, and audit details (who, when, tokens, latency).</p></div></div>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Dry-run result</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td class="key">Valid query, rows returned</td><td>Save the card</td></tr>
+      <tr><td class="key">Valid query, zero rows</td><td>Save the card and show an empty state. Zero waiting orders is a correct answer, not a broken card.</td></tr>
+      <tr><td class="key">Binding does not resolve</td><td>Reject, or use the one repair attempt</td></tr>
+      <tr><td class="key">Query fails</td><td>Report the error. Never treat it as empty data.</td></tr>
+      <tr><td class="key">Timeout or row limit hit</td><td>Fail safely and say which limit was hit</td></tr>
+      <tr><td class="key">Optional field is null</td><td>Allowed when the output schema marks it optional or nullable. Only required fields count as broken.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>3.2 Showing and using a card (<code>/api/tool</code>)</h3>
+  <div class="flow">
+    <div class="step"><div class="body"><span class="who">Browser · Renderer</span><h3>Each <code>Query()</code> calls <code>/api/tool</code></h3><p>Through the query cache, so two cards asking for the same data make one request.</p></div></div>
+    <div class="step"><div class="body"><span class="who">Server</span><h3>Session → role check → schema check → handler</h3><p>The handler gets <code>ctx</code> from the session and returns only this store's rows. Output is checked against the output schema and size-capped.</p></div></div>
+    <div class="step"><div class="body"><span class="who">Browser</span><h3>Filters, refresh and buttons</h3><p>Go straight to <code>/api/tool</code>. No AI call, so they are fast and cost nothing. A write declares what it <code>invalidates</code>, and every card that <code>reads</code> that data refetches.</p></div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>What a layout looks like</h3>
+<pre class="code"><span class="k">root</span> = Stack([tbl])
+<span class="k">q</span> = Query("get_store_orders", {olderThanDays: 2},
+      {"orders": []})          <span class="c">// empty while loading</span>
+<span class="k">tbl</span> = Table([Col("Customer", q.orders.customer),
+             Col("Status",   q.orders.status)])</pre>
+    </div>
+    <div class="box">
+      <h3>How a hand-written page changes data</h3>
+<pre class="code"><span class="k">m</span> = Mutation("update_order_status",
+      {orderId: $order, status: $status})
+<span class="k">btn</span> = Button("Save",
+      Action([@Run(m), @Run(q)]))  <span class="c">// save, then refresh</span></pre>
+      <p class="muted" style="font-size:.88rem">If <code>@Run(m)</code> fails, the next steps are skipped. AI-made cards may not contain <code>Mutation</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 STORED -->
+<section id="stored">
+  <header>
+    <span class="eyebrow">4 · What is stored where</span>
+    <h2>Shared role pages, personal rows on top</h2>
+    <p class="muted">Nobody gets a full copy of a page. Admin changes to a role page reach every user, and a user's own cards and changes are separate rows.</p>
+  </header>
+  <div class="tbl"><table>
+    <thead><tr><th>Table</th><th>Holds</th><th>Keyed by</th></tr></thead>
+    <tbody>
+      <tr><td class="key"><code>page_layouts</code></td><td>The role's default page as OpenUI Lang, with a <code>version</code></td><td>role + page</td></tr>
+      <tr><td class="key"><code>user_cards</code></td><td>Cards the user asked for: layout text, position, size, pinned, hidden, tool versions used, <code>version</code></td><td>user + page + stable <code>card_id</code></td></tr>
+      <tr><td class="key"><code>user_page_prefs</code></td><td>Which default blocks the user hid or moved</td><td>user + page</td></tr>
+      <tr><td class="key"><code>ui_state</code></td><td>Saved screen state as JSON: page date range, a card's filter or sort</td><td>user + scope (<code>page:orders</code> or <code>card:&lt;id&gt;</code>)</td></tr>
+      <tr><td class="key"><code>sessions</code></td><td>Random session ID, user, expiry</td><td>session ID</td></tr>
+      <tr><td class="key"><code>audit_log</code></td><td>Actor, tool or ask, outcome, latency, tokens. No full payloads.</td><td>time + user</td></tr>
+      <tr><td class="key">GoCart tables</td><td>Products, orders, cart, addresses. Layouts never contain data rows.</td><td>store / user</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3">
+    <div class="box"><h3>Reset to default</h3><p>Deletes the user's <code>user_page_prefs</code> rows. Their own cards stay unless they remove them.</p></div>
+    <div class="box"><h3>Two open tabs</h3><p>Layout and card saves send the <code>version</code> they started from. A stale save is rejected instead of silently overwriting. Screen state uses last write wins.</p></div>
+    <div class="box"><h3>Building blocks</h3><p>OpenUI's built-in components with GoCart's colours to start. A generated spec tells the server what exists. GoCart's own components can be registered later.</p></div>
+  </div>
+</section>
+
+<!-- 5 STATE -->
+<section id="state">
+  <header>
+    <span class="eyebrow">5 · Sessions &amp; user state</span>
+    <h2>Who the user is and how their screen state is kept</h2>
+    <p>OpenUI keeps screen state in memory per Renderer and gives us <code>onStateUpdate</code> and <code>initialState</code>. It has no session store, so we build one.</p>
+  </header>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>5.1 Who is the user?</h3>
+      <div class="flow">
+        <div class="step"><div class="body"><p>User logs in. The server creates a <code>sessions</code> row.</p></div></div>
+        <div class="step"><div class="body"><p>The browser gets a cookie holding only the session ID: <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Lax</code>.</p></div></div>
+        <div class="step"><div class="body"><p>Every request builds <code>ctx</code> from the cookie. POSTs also pass a CSRF check.</p></div></div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>5.2 Browser cache rules</h3>
+      <ul class="plain">
+        <li>Query keys include the user ID: <code>[userId, tool, args]</code>.</li>
+        <li>Logout and account switching clear the whole cache.</li>
+        <li>Nothing renders until the new session has loaded, so the previous user's data never flashes.</li>
+        <li>The server's checks stay authoritative whatever the cache holds.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="box">
+      <h3>5.3 Card state</h3>
+      <p>The user changes a filter. OpenUI calls <code>onStateUpdate</code>. We wait 400&nbsp;ms, then save to <code>/api/state</code>, and also save on tab close with <code>sendBeacon</code>. The next visit passes it back through <code>initialState</code>.</p>
+    </div>
+    <div class="box">
+      <h3>5.4 Page-wide state</h3>
+      <p>The date range lives in a small client store and is saved to <code>/api/state</code>. Cards pass it into their query args, so changing it refetches every card. It is not a tool.</p>
+    </div>
+    <div class="box">
+      <h3>5.5 Refreshing after a write</h3>
+      <p>A write tool declares <code>invalidates: ["orders"]</code>. The cache refetches every query whose tool <code>reads</code> orders, including the cart badge in the React header. Other tabs: add <code>BroadcastChannel</code> in production.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 SCOPE -->
+<section id="scope">
+  <header>
+    <span class="eyebrow">6 · Demo vs production</span>
+    <h2>Disposable demo, not an insecure one</h2>
+    <p>We build for the GoCart demo first. Infrastructure the demo does not need can wait. Tenant isolation, safe execution and correct data handling cannot.</p>
+  </header>
+  <div class="grid3">
+    <div class="box">
+      <span class="pill">Day one</span>
+      <h3>In the demo from the start</h3>
+      <ul class="plain">
+        <li>Session-derived <code>ctx</code> and store-scoped repository functions</li>
+        <li>Tool registry with zod input and output schemas</li>
+        <li>Registered components only; server-side validation</li>
+        <li>Read-only AI cards</li>
+        <li>Tool timeouts and row limits</li>
+        <li>Dry run with the result rules in 3.1</li>
+        <li>Cache keyed by user and cleared on logout</li>
+        <li>"Needs rebuild" fallback for broken saved cards</li>
+        <li>One repair attempt; token and latency logging</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="pill warn">Deferred</span>
+      <h3>Fine to leave out of the demo</h3>
+      <ul class="plain">
+        <li>Postgres (SQLite for the demo)</li>
+        <li>MCP adapter</li>
+        <li>Cross-tab refresh, optimistic updates</li>
+        <li>Schema migration tooling</li>
+        <li>Rate limits beyond a simple cap</li>
+        <li>Full audit log and dashboards</li>
+        <li>Registering GoCart's own components</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="pill no">Before real customer data</span>
+      <h3>Must be finished first</h3>
+      <ul class="plain">
+        <li>Postgres with row-level security per store</li>
+        <li>Rate limits on <code>/api/ask</code> and <code>/api/tool</code></li>
+        <li>Full audit log with retention rules</li>
+        <li>Schema versioning with a rebuild workflow</li>
+        <li>CI that re-checks every saved layout on tool changes</li>
+        <li>Agreed LLM provider terms and a monthly budget</li>
+        <li>Security review of the session and tool paths</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 7 PHASES -->
+<section id="phases">
+  <header>
+    <span class="eyebrow">7 · Build plan</span>
+    <h2>One complete slice first, then widen</h2>
+    <p>The milestone is the full lifecycle on one seller workflow, not a good-looking dashboard:</p>
+    <div class="lifecycle" aria-label="Lifecycle milestone">
+      <span>Ask for a card</span><i>→</i><span>validate</span><i>→</i><span>run its queries safely</span><i>→</i><span>save</span><i>→</i><span>change the date range</span><i>→</i><span>refresh</span><i>→</i><span>write</span><i>→</i><span>dependent cards refresh</span>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="stage-head"><h3>Stage 0 · Agree on the plan</h3><span class="range">phases 1–2</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Phase</th><th>Done when</th></tr></thead><tbody>
+      <tr><td class="n">1</td><td>This plan and the decisions in section 8</td><td>The team has answered them</td></tr>
+      <tr><td class="n">2</td><td>Mock of Seller → Orders as OpenUI with the Ask button</td><td>The team agrees on how it should look and feel</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><h3>Stage 1 · Working vertical slice</h3><span class="range">phases 3–8</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Phase</th><th>Done when</th></tr></thead><tbody>
+      <tr><td class="n">3</td><td>Upgrade Next.js (15.3.5 has security advisories) and agree one version with the POC</td><td>The app builds and runs as before</td></tr>
+      <tr><td class="n">4</td><td>Move the mock data from browser localStorage into SQLite behind store-scoped repository functions</td><td>The app works the same; data lives on the server</td></tr>
+      <tr><td class="n">5</td><td>Login with <code>users</code> and <code>sessions</code>, cookie, CSRF, <code>ctx</code></td><td>Can log in as admin, seller and shopper; logout works</td></tr>
+      <tr><td class="n">6</td><td>Tool registry and <code>/api/tool</code> with one tool: <code>get_store_orders</code></td><td>A test proves Seller A cannot read Seller B's orders, by any argument</td></tr>
+      <tr><td class="n">7</td><td>OpenUI Renderer, <code>toolProvider</code> → <code>/api/tool</code>, query cache keyed by user; Seller → Orders loads from <code>page_layouts</code></td><td>The page comes from the database and shows live data</td></tr>
+      <tr class="mile"><td class="n">8</td><td>Page-wide date range in the client store, saved to <code>/api/state</code></td><td><b>Slice works:</b> changing the range refetches the table and survives a reload</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><h3>Stage 2 · AI-generated card</h3><span class="range">phases 9–13</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Phase</th><th>Done when</th></tr></thead><tbody>
+      <tr><td class="n">9</td><td>Ask button UI: open, type, drag</td><td>Works without any AI</td></tr>
+      <tr><td class="n">10</td><td><code>/api/ask</code>: prompt from the role's read tools and a trimmed component list</td><td>A question returns layout text</td></tr>
+      <tr><td class="n">11</td><td>Parse, validate, one repair attempt</td><td>Bad layouts are rejected with a reason and logged</td></tr>
+      <tr><td class="n">12</td><td>Dry run with the result rules in 3.1</td><td>Empty, error and timeout cases each behave as the table says</td></tr>
+      <tr class="mile"><td class="n">13</td><td>Save to <code>user_cards</code>; empty, error and "needs rebuild" states</td><td><b>AI card works:</b> the card appears, follows the date range and survives a reload</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><h3>Stage 3 · Interactive behaviour</h3><span class="range">phases 14–17</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Phase</th><th>Done when</th></tr></thead><tbody>
+      <tr class="mile"><td class="n">14</td><td>Write tool <code>update_order_status</code> with ownership check and <code>invalidates: ["orders"]</code>; Save button on the hand-written page</td><td><b>Full lifecycle:</b> a status change refreshes the table and the AI card</td></tr>
+      <tr><td class="n">15</td><td>Card state through <code>onStateUpdate</code> / <code>initialState</code></td><td>A card's filter is still set after a reload</td></tr>
+      <tr><td class="n">16</td><td>Edit a card by asking ("make it a bar chart")</td><td>The card updates in place and keeps its ID and state</td></tr>
+      <tr><td class="n">17</td><td>Drag, resize, pin, hide; reset to default; version check on saves</td><td>Every action is saved per user; a stale tab save is rejected</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><h3>Stage 4 · Demo hardening</h3><span class="range">phases 18–21</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Phase</th><th>Done when</th></tr></thead><tbody>
+      <tr><td class="n">18</td><td>Tenant and account-switch tests: other stores' IDs in args, logout then login as another user</td><td>No cross-store data in any response or cached screen</td></tr>
+      <tr><td class="n">19</td><td>Failure tests: invalid layouts, tool errors, timeouts, row limits, a tool schema change against saved cards</td><td>Each shows the right state; nothing crashes the page</td></tr>
+      <tr><td class="n">20</td><td>20 test questions with pass rules, including ones that tempt made-up numbers</td><td>We have a success rate, for example 17 of 20</td></tr>
+      <tr><td class="n">21</td><td>Browser tests: login → ask → card → date range → write → refresh → reload</td><td>All pass</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><h3>Stage 5 · Widen</h3><span class="range">phases 22–25</span></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Phase</th><th>Done when</th></tr></thead><tbody>
+      <tr><td class="n">22</td><td>Remaining read tools (products, dashboard, low stock, sales by product) and toggle-stock write</td><td>All tools tested per store</td></tr>
+      <tr><td class="n">23</td><td>Migrate the seller dashboard and products pages</td><td>They run as OpenUI</td></tr>
+      <tr><td class="n">24</td><td>Migrate the admin pages</td><td>They run as OpenUI</td></tr>
+      <tr><td class="n">25</td><td>Optional: MCP adapter generated from the registry</td><td>An outside agent can call the same tools with the same checks</td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<!-- 8 DECISIONS -->
+<section id="decisions">
+  <header>
+    <span class="eyebrow">8 · Decisions for the call</span>
+    <h2>Nine things to agree on</h2>
+  </header>
+  <div class="box" style="padding-block:4px">
+    <div class="dec"><span class="n">1</span><div><p class="q">How do layouts reach the data?</p><p class="rec"><b>Recommended:</b> browser → <code>/api/tool</code> → tool registry, all inside the app. MCP as an optional adapter from the same registry.</p></div></div>
+    <div class="dec"><span class="n">2</span><div><p class="q">Demo or production first?</p><p class="rec"><b>Recommended:</b> demo first, with the day-one list in section 6. Nothing reaches real customer data until the right-hand list is done.</p></div></div>
+    <div class="dec"><span class="n">3</span><div><p class="q">Which pages first?</p><p class="rec"><b>Recommended:</b> Seller → Orders as the slice, then seller and admin pages. Shopper pages later because of SEO, brand and checkout risk.</p></div></div>
+    <div class="dec"><span class="n">4</span><div><p class="q">What stays plain React?</p><p class="rec"><b>Recommended:</b> routing, header, login, payment and image upload. Page bodies become OpenUI.</p></div></div>
+    <div class="dec"><span class="n">5</span><div><p class="q">Can the AI write layouts that change data?</p><p class="rec"><b>Recommended:</b> no. Enforced by the validator. Any future AI-made writes need a separate permission and confirmation flow.</p></div></div>
+    <div class="dec"><span class="n">6</span><div><p class="q">Who can change pages?</p><p class="rec"><b>Recommended:</b> each user adds cards and hides or moves blocks for themselves. An admin changes the role default for everyone.</p></div></div>
+    <div class="dec"><span class="n">7</span><div><p class="q">Which components?</p><p class="rec"><b>Recommended:</b> OpenUI's built-ins with GoCart's colours to start.</p></div></div>
+    <div class="dec"><span class="n">8</span><div><p class="q">Which model and keys?</p><p class="rec"><b>Open:</b> Gemini (used in the POC) or Claude. We need an API key and a monthly budget.</p></div></div>
+    <div class="dec"><span class="n">9</span><div><p class="q">Which database?</p><p class="rec"><b>Recommended:</b> SQLite for the demo, Postgres with row-level security for production.</p></div></div>
+  </div>
+</section>
+
+<!-- 9 ALTERNATIVES -->
+<section id="alternatives">
+  <header>
+    <span class="eyebrow">9 · Other ways we considered</span>
+    <h2>Options we looked at and why we did not pick them</h2>
+  </header>
+
+  <div class="alt-group">
+    <h3>Product approach</h3>
+    <div class="alt">
+      <div class="row"><h3>Overlay on top of the existing app, no migration</h3><span class="pill warn">Keep for locked apps</span></div>
+      <dl>
+        <dt>Why not</dt><dd>OpenUI draws new UI where we place it. It cannot change the app's existing parts, and hiding old parts with CSS selectors breaks when the markup changes.</dd>
+      </dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Browser extension</h3><span class="pill no">Not picked</span></div>
+      <dl><dt>Why not</dt><dd>Every user must install it, the app's owner has no control, and it breaks when the markup changes.</dd></dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Dashboard builder without AI, or a separate low-code tool</h3><span class="pill no">Not picked</span></div>
+      <dl><dt>Why not</dt><dd>Users can only pick widgets someone already built, or must use a second app with a second login.</dd></dl>
+    </div>
+  </div>
+
+  <div class="alt-group">
+    <h3>What the AI produces</h3>
+    <div class="alt">
+      <div class="row"><h3>AI writes raw HTML or React</h3><span class="pill no">Not picked</span></div>
+      <dl><dt>Why not</dt><dd>Free-form code cannot be checked reliably before it runs and can carry scripts. OpenUI Lang is small and checked on the server.</dd></dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Send the data to the AI</h3><span class="pill warn">Debug switch only</span></div>
+      <dl><dt>Why not</dt><dd>Customer data would leave our system, and the AI could type numbers into the card instead of binding them.</dd></dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Generate the page on every visit, or stream it in</h3><span class="pill no">Not picked</span></div>
+      <dl><dt>Why not</dt><dd>Slow, costly, different each time, and a streamed card cannot be validated and saved as a whole.</dd></dl>
+    </div>
+  </div>
+
+  <div class="alt-group">
+    <h3>How data is reached</h3>
+    <div class="alt">
+      <div class="row"><h3>Separate MCP server in the path of every page load</h3><span class="pill warn">Later, as an adapter</span></div>
+      <dl>
+        <dt>Why not</dt><dd>The AI only reads tool schemas; it never calls tools. A separate server adds a network hop and a second auth layer between the app and the tools, with no gain for the pages.</dd>
+        <dt>Keep for</dt><dd>Outside agents. Generate it from the same registry so the checks are identical.</dd>
+      </dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Browser calls the app's functions directly</h3><span class="pill warn">Prototype only</span></div>
+      <dl><dt>Why not</dt><dd>No single place for login checks and logs.</dd></dl>
+    </div>
+  </div>
+
+  <div class="alt-group">
+    <h3>How user changes are stored</h3>
+    <div class="alt">
+      <div class="row"><h3>Full copy of the page per user on first change</h3><span class="pill no">Replaced in revision 2</span></div>
+      <dl><dt>Why not</dt><dd>The copy goes stale. Users never get later changes to the role page, and every copy breaks separately when a tool changes.</dd></dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Page-wide state as a server tool</h3><span class="pill no">Replaced in revision 2</span></div>
+      <dl><dt>Why not</dt><dd>Other cards would not know to refetch, and it mixes screen state with business data. A client store saved to <code>/api/state</code> does both jobs.</dd></dl>
+    </div>
+    <div class="alt">
+      <div class="row"><h3>Only in-memory state, or everything in localStorage</h3><span class="pill no">Not picked</span></div>
+      <dl><dt>Why not</dt><dd>Lost on reload, or stuck on one device. localStorage is used only for small preferences such as the Ask button position.</dd></dl>
+    </div>
+  </div>
+</section>
+
+<!-- 10 RISKS -->
+<section id="risks">
+  <header>
+    <span class="eyebrow">10 · Risks and things still to check</span>
+    <h2>What could go wrong</h2>
+  </header>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>What we do about it</th></tr></thead>
+    <tbody>
+      <tr><td class="key">One store seeing another's data</td><td><code>ctx</code> from the session only, store-scoped repository functions, ownership checks on every ID, tests in phases 6 and 18. Row-level security in production.</td></tr>
+      <tr><td class="key">Previous user's data on a shared browser</td><td>Cache keyed by user and cleared on logout or switch; nothing renders before the new session loads.</td></tr>
+      <tr><td class="key">AI reliability unknown</td><td>The POC never recorded a success rate. Phase 20 measures one before we promise anything.</td></tr>
+      <tr><td class="key">Made-up numbers in cards</td><td>Validator rejects hard-coded values in data components; test questions in phase 20 try to provoke it.</td></tr>
+      <tr><td class="key">Tools change and break saved cards</td><td>Cards record tool versions; broken cards show "needs rebuild"; CI re-checks saved layouts before production.</td></tr>
+      <tr><td class="key">Cost per question</td><td>Send only the role's tools and a trimmed component list; log tokens per request. The full component list is estimated at about 10,000 tokens, still to be measured.</td></tr>
+      <tr><td class="key">Shared state between Renderers</td><td>Not verified whether two Renderers can share a <code>$variable</code>. The client store in 5.4 does not depend on it.</td></tr>
+      <tr><td class="key">Next.js versions differ</td><td>GoCart uses 15.3.5, the POC uses 16. Agree one version in phase 3.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 11 SOURCES -->
+<section id="sources">
+  <header>
+    <span class="eyebrow">11 · Sources</span>
+    <h2>Where the facts in this plan come from</h2>
+  </header>
+  <div class="grid2">
+    <div class="box">
+      <h3>OpenUI, official</h3>
+      <ul class="plain">
+        <li><a href="https://www.openui.com/docs" target="_blank" rel="noopener">openui.com/docs</a></li>
+        <li><a href="https://github.com/thesysdev/openui" target="_blank" rel="noopener">github.com/thesysdev/openui</a></li>
+        <li>Installed type definitions, <code>@openuidev/lang-core</code> and <code>@openuidev/react-lang</code> 0.3.0: Renderer props, <code>Store</code>, <code>Query</code>, <code>Mutation</code>, <code>@Run</code></li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Our own code</h3>
+      <ul class="plain">
+        <li>ZoomInfo Open-UI POC: <code>portal/</code> (ask route, tool route, validator, layouts table) and <code>src/state/session.ts</code></li>
+        <li>GoCart: <code>lib/mockApi.js</code> (28 data functions) and the API usage spreadsheet</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>GoCart on OpenUI · engineering plan · revision 2 · 12 Oct 2026</span>
+  <span>Sessions, per-user state, the tool registry and the dry run are our own design. OpenUI provides the language, the Renderer and the components.</span>
+</footer>
+</main>
+
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
+  if(!('IntersectionObserver' in window))return;
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(l){l.classList.remove('on')});
+        var a=map[e.target.id]; if(a){a.classList.add('on');
+          try{a.scrollIntoView({block:'nearest',inline:'nearest'})}catch(_){}}
+      }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  document.querySelectorAll('main section').forEach(function(s){io.observe(s)});
+})();
+</script>
+
+</body></html>

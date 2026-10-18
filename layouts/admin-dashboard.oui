@@ -1,0 +1,8 @@
+root = Dashboard("Admin", "Dashboard", [stats, chart])
+q = Query("get_admin_dashboard", {}, {"products": 0, "revenue": 0, "orders": 0, "stores": 0, "ordersPerDay": []})
+stats = StatRow([products, revenue, orders, stores])
+products = StatCard("Total Products", q.products, "products")
+revenue = StatCard("Total Revenue", q.revenue, "revenue", "currency")
+orders = StatCard("Total Orders", q.orders, "orders")
+stores = StatCard("Total Stores", q.stores, "stores")
+chart = AreaChart("Orders /", "Day", q.ordersPerDay, "date", "orders", "Orders")
