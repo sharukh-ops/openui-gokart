@@ -5,31 +5,24 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
+  Legend,
+  Pie,
+  PieChart as RechartsPieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { z } from "zod/v4";
+import { AreaChartSpec, BarChartSpec, PieChartSpec, type ChartProps } from "../specs";
 
 /**
- * Same props for both chart types, so a recipe can swap one for the other.
- * A function, not a shared object: defineComponent tags the schema it is given
- * with the component's name, so one shared schema would end up named after
- * whichever chart was defined last and the other would vanish from the library.
+ * The rows, or none yet. When the Ask button swaps recipes and the new one reuses
+ * a Query name (say `q`), OpenUI briefly keeps the old result, so `q.rows` can be
+ * undefined for one render until the new data arrives.
  */
-const chartProps = () => z.object({
-  muted: z.string().describe("Grey first part of the heading, e.g. 'Orders /'"),
-  title: z.string().describe("Dark second part of the heading, e.g. 'Day'"),
-  data: z
-    .array(z.record(z.string(), z.union([z.string(), z.number()])))
-    .describe("Rows to plot, usually bound to a Query field"),
-  xKey: z.string().describe("Field in each row for the horizontal axis"),
-  yKey: z.string().describe("Field in each row for the value"),
-  yLabel: z.string().optional().describe("Vertical axis label"),
-});
-
-type ChartProps = z.infer<ReturnType<typeof chartProps>>;
+function rowsOf(data: ChartProps["data"] | undefined): ChartProps["data"] {
+  return Array.isArray(data) ? data : [];
+}
 
 /** Frame and heading copied from GoCart's components/OrdersAreaChart.jsx. */
 function ChartFrame({ muted, title, children }: { muted: string; title: string; children: React.ReactElement }) {
@@ -55,12 +48,10 @@ function yAxis(props: ChartProps) {
 }
 
 export const AreaChart = defineComponent({
-  name: "AreaChart",
-  description: "An area chart of one value over a sequence such as days.",
-  props: chartProps(),
+  ...AreaChartSpec,
   component: ({ props }) => (
     <ChartFrame muted={props.muted} title={props.title}>
-      <RechartsAreaChart data={props.data}>
+      <RechartsAreaChart data={rowsOf(props.data)}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={props.xKey} />
         {yAxis(props)}
@@ -72,18 +63,38 @@ export const AreaChart = defineComponent({
 });
 
 export const BarChart = defineComponent({
-  name: "BarChart",
-  description: "A bar chart of one value per category or day.",
-  props: chartProps(),
+  ...BarChartSpec,
   component: ({ props }) => (
     <ChartFrame muted={props.muted} title={props.title}>
-      <RechartsBarChart data={props.data}>
+      <RechartsBarChart data={rowsOf(props.data)}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={props.xKey} />
         {yAxis(props)}
         <Tooltip />
         <Bar dataKey={props.yKey} fill="#8884d8" />
       </RechartsBarChart>
+    </ChartFrame>
+  ),
+});
+
+/** Slice colours, starting from the indigo and lavender the other charts use. */
+const PIE_COLORS = ["#4f46e5", "#8884d8", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7", "#64748b"];
+
+export const PieChart = defineComponent({
+  ...PieChartSpec,
+  component: ({ props }) => (
+    <ChartFrame muted={props.muted} title={props.title}>
+      <RechartsPieChart>
+        <Pie
+          data={rowsOf(props.data).map((row, i) => ({ ...row, fill: PIE_COLORS[i % PIE_COLORS.length] }))}
+          dataKey={props.valueKey}
+          nameKey={props.nameKey}
+          outerRadius="80%"
+          label
+        />
+        <Tooltip />
+        <Legend />
+      </RechartsPieChart>
     </ChartFrame>
   ),
 });

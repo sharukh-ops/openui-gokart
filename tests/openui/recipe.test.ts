@@ -38,7 +38,7 @@ describe("component library", () => {
   it("keeps every component, including ones that share prop shapes", () => {
     // Regression: AreaChart and BarChart once shared one schema object and AreaChart vanished.
     expect(Object.keys(gocartLibrary.components).sort()).toEqual(
-      ["AreaChart", "BarChart", "Dashboard", "StatCard", "StatRow"].sort(),
+      ["AreaChart", "BarChart", "Dashboard", "PieChart", "StatCard", "StatRow"].sort(),
     );
   });
 });

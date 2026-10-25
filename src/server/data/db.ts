@@ -26,12 +26,23 @@ export interface DbProduct {
   id: string;
   storeId: string;
   name: string;
+  category: string;
+  inStock: boolean;
+}
+
+export interface DbOrderItem {
+  productId: string;
+  quantity: number;
+  price: number;
 }
 
 export interface DbOrder {
   id: string;
   storeId: string;
   total: number;
+  status: string;
+  paymentMethod: string;
+  orderItems: DbOrderItem[];
   createdAt: string;
 }
 

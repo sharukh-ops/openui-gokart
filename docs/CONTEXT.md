@@ -1,7 +1,7 @@
 # Project context: GoCart on OpenUI
 
 Everything a new person (or a new Claude session) needs to continue this repo.
-Last updated: 17 Oct 2026, end of phase one.
+Last updated: 18 Oct 2026, phase one done; Ask button added (first part of phase two).
 
 ## 1. Why this exists
 
@@ -51,6 +51,40 @@ with the component's name, so the second definition renamed the shared schema an
 vanished from the library. Fix: each component gets its own schema instance (`chartProps()`), with a
 regression test in `tests/openui/recipe.test.ts`.
 
+## 3b. Ask button: done in a first version (18 Oct 2026)
+
+Decisions taken with the user:
+| # | Decision |
+|---|---|
+| 1 | AI provider: **Groq** (OpenAI-compatible API, plain `fetch`, no SDK). Default model `openai/gpt-oss-120b`, change with `GROQ_MODEL`. Key in `.env.local` as `GROQ_API_KEY`. |
+| 2 | The answer **replaces the dashboard**; "Back to dashboard" restores it. Not saved yet (no database, no login). |
+| 3 | New read-only tools so there is more to ask about: `get_sales_by_store`, `get_orders_by_status`, `get_orders_by_payment_method`, `get_products_by_category`, `get_top_products`. All return `{ rows: [...] }`. |
+| 4 | New component `PieChart`. |
+
+How it follows the plan in section 6, step 3: the model gets `library.prompt()` and tool schemas only;
+the server checks the recipe (parses, known tools for the role, no Mutation, no typed-in values, size
+limits), does a dry run through `runTool`, and sends problems back to the model once. **Not done yet:**
+saving per user (needs login and a database).
+
+Facts learned:
+- A route handler **cannot import `@openuidev/react-lang`**: it calls React's `createContext` at import
+  time, which fails in the server build ("createContext is not a function" at `next build`). So the
+  component specs (name, description, props) live in `src/openui/specs.ts` with no React, and the server
+  builds its library from them with `@openuidev/lang-core` (`src/server/ai/library.ts`). A test checks
+  both libraries give the same JSON schema and prompt.
+- In `lang-core`, `defineComponent` returns `{ ...config, ref: config.props }`: a ref is the props schema.
+- Parsed props keep bindings as AST: `q.x` is `{k: "Member", obj: {k: "RuntimeRef", refType: "query"}}`,
+  a typed-in value is a plain literal. That is how "no typed-in values" is checked.
+- **Groq free plan: 8,000 tokens a minute** for `openai/gpt-oss-120b`. With OpenUI's tool sections the
+  prompt was about 11,000 characters and a question cost about 4,300 tokens (one or two a minute, HTTP
+  429). So `library.prompt()` is now called with `toolCalls: false` (that also drops its advice to use
+  `Mutation`, `@Count` and "mock data"), and `ask.ts` adds a short "Data" section for our tools. gpt-oss
+  gets `reasoning_effort: "low"` and `include_reasoning: false`. A question now costs about 1,850 tokens.
+  A 429 becomes a clear "try again in N seconds" message (HTTP 429 with Retry-After). A test caps the
+  prompt at 7,000 characters.
+- Seen in a live run: for "top products" the model made one StatCard per row (`q.rows[11]` ...). The
+  checker rejected it; a rule now says to bind one chart to `q.rows` for lists.
+
 ## 4. OpenUI facts (checked against the installed 1.0.1 package, not memory)
 
 The ZoomInfo POC used OpenUI **0.3.0**; this repo uses **1.0.1**. Check the installed types and README
@@ -81,9 +115,8 @@ details. Reference: https://openui.com/docs/api-reference/react-lang
 
 1. Move recipes from `layouts/` to a database table (keep the `/api/layouts/[name]` URL).
 2. Real login and sessions; the tool context comes from the session.
-3. The Ask button: the AI receives the library's prompt (`library.prompt()`) and the tool **schemas
-   only** (never data), writes a card recipe, the server validates it (parse, known tools, no Mutation,
-   no typed-in values), runs a dry run, then saves it per user.
+3. The Ask button: **first version done** (see 3b). Still to do: save the answer per user, add a
+   rate limit, and let the user add a card to the dashboard instead of only replacing it.
 4. Fix the UTC-date chart quirk.
 5. Migrate the other admin pages (Stores, Approve Store, Coupons).
 

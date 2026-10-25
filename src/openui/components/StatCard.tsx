@@ -1,7 +1,7 @@
 import { defineComponent } from "@openuidev/react-lang";
 import { CircleDollarSignIcon, ShoppingBasketIcon, StoreIcon, TagsIcon, type LucideIcon } from "lucide-react";
-import { z } from "zod/v4";
 import { formatValue } from "../format";
+import { StatCardSpec } from "../specs";
 
 const ICONS = {
   products: ShoppingBasketIcon,
@@ -12,14 +12,7 @@ const ICONS = {
 
 /** One number box from GoCart's admin dashboard (same classes as app/admin/page.jsx). */
 export const StatCard = defineComponent({
-  name: "StatCard",
-  description: "A labelled number box with an icon. Use for one headline figure such as a total.",
-  props: z.object({
-    title: z.string().describe("Label shown above the number"),
-    value: z.union([z.number(), z.string()]).describe("The number, usually bound to a Query field"),
-    icon: z.enum(["products", "revenue", "orders", "stores"]).describe("Which icon to show"),
-    format: z.enum(["number", "currency"]).optional().describe("currency adds the symbol and 2 decimals"),
-  }),
+  ...StatCardSpec,
   component: ({ props }) => {
     const Icon = ICONS[props.icon];
     return (
